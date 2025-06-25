@@ -2,27 +2,43 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'StudentAdmissionDB';
+const DB_VERSION = 1;
 const STORE_NAME = 'submissions';
 
-export const initDB = async () => {
-  return await openDB(DB_NAME, 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, {
-          keyPath: 'id',
-          autoIncrement: true,
-        });
-      }
-    },
-  });
+let dbPromise;
+
+const initDB = () => {
+  if (!dbPromise) {
+    dbPromise = openDB(DB_NAME, DB_VERSION, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
+        }
+      },
+    });
+  }
+  return dbPromise;
 };
 
 export const addFormData = async (data) => {
   const db = await initDB();
-  await db.add(STORE_NAME, data);
+  return db.add(STORE_NAME, data);
 };
 
 export const getAllFormData = async () => {
   const db = await initDB();
-  return await db.getAll(STORE_NAME);
+  return db.getAll(STORE_NAME);
+};
+
+export const clearAllFormData = async () => {
+  const db = await initDB();
+  return db.clear(STORE_NAME);
+};
+
+export const deleteFormDataById = async (id) => {
+  const db = await initDB();
+  return db.delete(STORE_NAME, id);
 };
